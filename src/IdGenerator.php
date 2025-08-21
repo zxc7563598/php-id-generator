@@ -34,8 +34,8 @@ class IdGenerator
      *
      * @param string $strategy 策略名称：snowflake, timestamp, readable，uuid，自定义策略
      * @param array $config 配置数组（内置策略，自定义策略自行定义）
-     *      - snowflake: ['machineId' => int, 'useFileLock' => bool]
-     *      - timestamp: ['prefix' => string, 'useFileLock' => bool]
+     *      - snowflake: ['useFileLock' => bool, 'redisConfig' => array(['host' => string,'port' => string,'auth' => string|null])]
+     *      - timestamp: ['prefix' => string, 'useFileLock' => bool, 'redisConfig' => array(['host' => string,'port' => string,'auth' => string|null])]
      *      - readable: ['prefix' => string, 'randomLength' => int]
      *      - uuid: ['version' => string]
      *
