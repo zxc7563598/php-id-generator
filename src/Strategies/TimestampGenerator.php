@@ -21,8 +21,8 @@ class TimestampGenerator implements Generator
 
     public function generate(): string
     {
-        $time = microtime(true);
-        $timeMs = (int)($time * 1000);
+        // 使用 DateTimeImmutable 获取毫秒时间戳
+        $timeMs = (int)(new \DateTimeImmutable())->format('Uv');
 
         if ($this->useFileLock) {
             $sequence = $this->getSequenceWithFileLock($timeMs);
@@ -65,7 +65,7 @@ class TimestampGenerator implements Generator
 
         return [
             'prefix' => $prefix,
-            'datetime' => date('Y-m-d H:i:s', $timeMs / 1000),
+            'datetime' => date('Y-m-d H:i:s', (int)($timeMs / 1000)),
             'timestamp' => $timeMs,
             'sequence' => $sequence,
         ];

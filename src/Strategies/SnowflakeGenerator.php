@@ -3,7 +3,6 @@
 namespace Hejunjie\IdGenerator\Strategies;
 
 use Hejunjie\IdGenerator\Contracts\Generator;
-use Hejunjie\IdGenerator\Helpers\MachineId;
 
 /**
  * 雪花 ID 生成器
@@ -31,15 +30,16 @@ class SnowflakeGenerator implements Generator
 
     private function generateDefault(): string
     {
-        $timeMs = (int)(microtime(true) * 1000);
-        $timeUs = (int)((microtime(true) * 1000) % 1000);
+        // 使用 DateTimeImmutable 获取毫秒时间戳
+        $timeMs = (int)(new \DateTimeImmutable())->format('Uv');
+        $timeUs = (int)(new \DateTimeImmutable())->format('u'); // 微秒（6位）
         $pid    = getmypid() % 1024;
         $rand   = random_int(0, 4095);
 
         return sprintf(
             '%d%03d%03d%03d%03d',
             $timeMs,
-            $timeUs,
+            (int)($timeUs / 1000), // 转成 3 位毫秒内微秒
             $this->machineId,
             $pid,
             $rand
@@ -53,7 +53,7 @@ class SnowflakeGenerator implements Generator
         $fp = fopen($lockFile, 'c+');
         flock($fp, LOCK_EX);
 
-        $time = (int)(microtime(true) * 1000);
+        $time = (int)(new \DateTimeImmutable())->format('Uv'); // 毫秒时间戳
         $sequence = 0;
 
         if (file_exists($seqFile)) {
@@ -79,7 +79,7 @@ class SnowflakeGenerator implements Generator
 
         return [
             'timestamp' => $timeMs,
-            'datetime' => date('Y-m-d H:i:s', $timeMs / 1000),
+            'datetime' => date('Y-m-d H:i:s', (int)($timeMs / 1000)),
             'machine_id' => $machineId,
             'sequence' => $sequence,
         ];
