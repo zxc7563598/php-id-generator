@@ -36,7 +36,6 @@ class ReadableGenerator implements Generator
     {
         $date = date('Y-m-d');
         $random = $this->randomString($this->randomLength);
-
         return "{$this->prefix}-{$date}-{$random}";
     }
 
@@ -50,15 +49,12 @@ class ReadableGenerator implements Generator
     public function parse(string $id): array
     {
         $parts = explode('-', $id);
-
         if (count($parts) < 3) {
             throw new \InvalidArgumentException("Invalid Readable ID format: $id");
         }
-
         $prefix = $parts[0];
         $date   = $parts[1] . '-' . $parts[2] . '-' . $parts[3];
         $random = $parts[4] ?? '';
-
         return [
             'prefix' => $prefix,
             'date'   => $date,

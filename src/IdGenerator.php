@@ -51,12 +51,13 @@ class IdGenerator
         // 内置策略
         return match ($strategy) {
             'snowflake' => new SnowflakeGenerator(
-                $config['machineId'] ?? null,
-                $config['useFileLock'] ?? false
+                $config['useFileLock'] ?? false,
+                $config['redisConfig'] ?? []
             ),
             'timestamp' => new TimestampGenerator(
                 $config['prefix'] ?? '',
-                $config['useFileLock'] ?? false
+                $config['useFileLock'] ?? false,
+                $config['redisConfig'] ?? []
             ),
             'readable'  => new ReadableGenerator(
                 $config['prefix'] ?? 'ID',

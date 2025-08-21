@@ -8,9 +8,17 @@ namespace Hejunjie\IdGenerator\Contracts;
 interface Generator
 {
     /**
-     * 生成唯一 ID
+     * 生成ID
+     * 
+     * @return string 
      */
     public function generate(): string;
 
+    /**
+     * 解析ID
+     * @param string $id 
+     * 
+     * @return array 
+     */
     public function parse(string $id): array;
 }
