@@ -11,87 +11,77 @@ use Hejunjie\IdGenerator\Helpers\MachineId;
  */
 class SnowflakeGenerator implements Generator
 {
-    // 起始时间戳（毫秒），通常设置为一个固定时间点，避免 41 位时间溢出
-    private const EPOCH = 1672531200000; // 2023-01-01 00:00:00
-
     private int $machineId;
-    private int $lastTimestamp = -1;
-    private int $sequence = 0;
+    private bool $useFileLock;
 
-    // 位移定义
-    private const MACHINE_ID_BITS = 10;
-    private const SEQUENCE_BITS   = 12;
-
-    private const MAX_MACHINE_ID = (1 << self::MACHINE_ID_BITS) - 1; // 1023
-    private const MAX_SEQUENCE   = (1 << self::SEQUENCE_BITS) - 1;   // 4095
-
-    private const MACHINE_ID_SHIFT = self::SEQUENCE_BITS;
-    private const TIMESTAMP_SHIFT  = self::SEQUENCE_BITS + self::MACHINE_ID_BITS;
-
-    public function __construct(?int $machineId = null)
+    public function __construct(?int $machineId = null, bool $useFileLock = false)
     {
-        $this->machineId = $machineId ?? MachineId::get();
-
-        if ($this->machineId > self::MAX_MACHINE_ID || $this->machineId < 0) {
-            throw new \InvalidArgumentException("Machine ID must be between 0 and " . self::MAX_MACHINE_ID);
-        }
+        $this->machineId = $machineId ?? random_int(0, 1023); // 10位机器码
+        $this->useFileLock = $useFileLock;
     }
 
     public function generate(): string
     {
-        $timestamp = $this->currentTimeMillis();
-
-        if ($timestamp < $this->lastTimestamp) {
-            throw new \RuntimeException("Clock moved backwards. Refusing to generate id.");
+        if ($this->useFileLock) {
+            return $this->generateWithFileLock();
         }
 
-        if ($timestamp === $this->lastTimestamp) {
-            $this->sequence = ($this->sequence + 1) & self::MAX_SEQUENCE;
-            if ($this->sequence === 0) {
-                // 序列号用完，等到下一毫秒
-                $timestamp = $this->waitNextMillis($this->lastTimestamp);
+        return $this->generateDefault();
+    }
+
+    private function generateDefault(): string
+    {
+        $timeMs = (int)(microtime(true) * 1000);
+        $timeUs = (int)((microtime(true) * 1000) % 1000);
+        $pid    = getmypid() % 1024;
+        $rand   = random_int(0, 4095);
+
+        return sprintf(
+            '%d%03d%03d%03d%03d',
+            $timeMs,
+            $timeUs,
+            $this->machineId,
+            $pid,
+            $rand
+        );
+    }
+
+    private function generateWithFileLock(): string
+    {
+        $lockFile = sys_get_temp_dir() . '/snowflake_sequence.lock';
+        $seqFile  = sys_get_temp_dir() . '/snowflake_sequence.txt';
+        $fp = fopen($lockFile, 'c+');
+        flock($fp, LOCK_EX);
+
+        $time = (int)(microtime(true) * 1000);
+        $sequence = 0;
+
+        if (file_exists($seqFile)) {
+            $data = json_decode(file_get_contents($seqFile), true);
+            if ($data['time'] === $time) {
+                $sequence = $data['sequence'] + 1;
             }
-        } else {
-            $this->sequence = 0;
         }
 
-        $this->lastTimestamp = $timestamp;
+        file_put_contents($seqFile, json_encode(['time' => $time, 'sequence' => $sequence]));
+        flock($fp, LOCK_UN);
+        fclose($fp);
 
-        // 拼接 ID
-        $id = (($timestamp - self::EPOCH) << self::TIMESTAMP_SHIFT)
-            | ($this->machineId << self::MACHINE_ID_SHIFT)
-            | $this->sequence;
-
-        return (string)$id;
+        return sprintf('%d%03d%03d', $time, $this->machineId, $sequence);
     }
 
     public function parse(string $id): array
     {
-        $id = (int)$id;
-
-        $sequence = $id & self::MAX_SEQUENCE;
-        $machineId = ($id >> self::MACHINE_ID_SHIFT) & self::MAX_MACHINE_ID;
-        $timestamp = ($id >> self::TIMESTAMP_SHIFT) + self::EPOCH;
+        // 简单解析：提取时间、机器码、序列
+        $timeMs = (int)substr($id, 0, 13);
+        $machineId = (int)substr($id, 13, 3);
+        $sequence = (int)substr($id, 16);
 
         return [
-            'timestamp'  => $timestamp,
-            'datetime'   => date('Y-m-d H:i:s.v', (int)($timestamp / 1000)),
+            'timestamp' => $timeMs,
+            'datetime' => date('Y-m-d H:i:s', $timeMs / 1000),
             'machine_id' => $machineId,
-            'sequence'   => $sequence,
+            'sequence' => $sequence,
         ];
-    }
-
-    private function currentTimeMillis(): int
-    {
-        return (int) floor(microtime(true) * 1000);
-    }
-
-    private function waitNextMillis(int $lastTimestamp): int
-    {
-        $timestamp = $this->currentTimeMillis();
-        while ($timestamp <= $lastTimestamp) {
-            $timestamp = $this->currentTimeMillis();
-        }
-        return $timestamp;
     }
 }
