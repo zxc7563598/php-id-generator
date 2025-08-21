@@ -1,6 +1,6 @@
 {
   "name": "hejunjie/id-generator",
-  "description": "A simple PHP ID generator",
+  "description": "一个多策略、高性能的 PHP 唯一 ID 生成器，支持雪花算法、时间戳、自定义可读 ID、UUID 等多种策略，轻松生成可解析的全局唯一 ID。",
   "type": "library",
   "license": "MIT",
   "autoload": {
