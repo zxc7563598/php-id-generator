@@ -7,6 +7,7 @@ use Hejunjie\IdGenerator\Contracts\Generator;
 use Hejunjie\IdGenerator\Strategies\SnowflakeGenerator;
 use Hejunjie\IdGenerator\Strategies\TimestampGenerator;
 use Hejunjie\IdGenerator\Strategies\ReadableGenerator;
+use Hejunjie\IdGenerator\Strategies\UUIDGenerator;
 
 /**
  * 工厂入口类，统一对外暴露 API
@@ -21,6 +22,7 @@ class IdGenerator
      *      - snowflake: ['machineId' => int]
      *      - timestamp: ['prefix' => string]
      *      - readable: ['prefix' => string, 'randomLength' => int]
+     *      - uuid: ['version' => string]
      *
      * @return Generator
      */
@@ -36,6 +38,9 @@ class IdGenerator
             'readable'  => new ReadableGenerator(
                 $config['prefix'] ?? 'ID',
                 $config['randomLength'] ?? 8
+            ),
+            'uuid'  => new UUIDGenerator(
+                $config['version'] ?? 'v4'
             ),
             default     => throw new InvalidArgumentException("Unsupported strategy: {$strategy}")
         };
