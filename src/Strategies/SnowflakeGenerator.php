@@ -13,12 +13,25 @@ class SnowflakeGenerator implements Generator
     private int $machineId;
     private bool $useFileLock;
 
+    /**
+     * 构造方法
+     * 
+     * @param null|int $machineId 机器码
+     * @param bool $useFileLock 是否使用文件锁
+     * 
+     * @return void
+     */
     public function __construct(?int $machineId = null, bool $useFileLock = false)
     {
         $this->machineId = $machineId ?? random_int(0, 1023); // 10位机器码
         $this->useFileLock = $useFileLock;
     }
 
+    /**
+     * 生成ID
+     * 
+     * @return string 
+     */
     public function generate(): string
     {
         if ($this->useFileLock) {
@@ -28,6 +41,11 @@ class SnowflakeGenerator implements Generator
         return $this->generateDefault();
     }
 
+    /**
+     * 生成默认ID
+     * 
+     * @return string
+     */
     private function generateDefault(): string
     {
         // 使用 DateTimeImmutable 获取毫秒时间戳
@@ -46,6 +64,11 @@ class SnowflakeGenerator implements Generator
         );
     }
 
+    /**
+     * 生成带文件锁的ID
+     * 
+     * @return string
+     */
     private function generateWithFileLock(): string
     {
         $lockFile = sys_get_temp_dir() . '/snowflake_sequence.lock';
@@ -70,6 +93,12 @@ class SnowflakeGenerator implements Generator
         return sprintf('%d%03d%03d', $time, $this->machineId, $sequence);
     }
 
+    /**
+     * 解析ID
+     * 
+     * @param string $id ID
+     * @return array 
+     */
     public function parse(string $id): array
     {
         // 简单解析：提取时间、机器码、序列

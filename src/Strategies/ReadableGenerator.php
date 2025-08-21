@@ -3,6 +3,7 @@
 namespace Hejunjie\IdGenerator\Strategies;
 
 use Hejunjie\IdGenerator\Contracts\Generator;
+use InvalidArgumentException;
 
 /**
  * 可读 ID 生成器
@@ -13,12 +14,24 @@ class ReadableGenerator implements Generator
     private string $prefix;
     private int $randomLength;
 
+    /**
+     * 构造方法
+     * 
+     * @param string $prefix ID前缀
+     * @param int $randomLength ID后缀长度
+     * @return void 
+     */
     public function __construct(string $prefix = 'ID', int $randomLength = 8)
     {
         $this->prefix = strtoupper($prefix);
         $this->randomLength = $randomLength;
     }
 
+    /**
+     * 生成ID
+     * 
+     * @return string 
+     */
     public function generate(): string
     {
         $date = date('Y-m-d');
@@ -27,6 +40,13 @@ class ReadableGenerator implements Generator
         return "{$this->prefix}-{$date}-{$random}";
     }
 
+    /**
+     * 解析ID
+     * 
+     * @param string $id ID
+     * @return array 
+     * @throws InvalidArgumentException 
+     */
     public function parse(string $id): array
     {
         $parts = explode('-', $id);
@@ -46,6 +66,13 @@ class ReadableGenerator implements Generator
         ];
     }
 
+    /**
+     * 生成指定长度的随机字符串
+     * 
+     * @param int $length 长度
+     * 
+     * @return string 
+     */
     private function randomString(int $length): string
     {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
