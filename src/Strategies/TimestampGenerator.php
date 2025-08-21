@@ -11,61 +11,63 @@ use Hejunjie\IdGenerator\Contracts\Generator;
 class TimestampGenerator implements Generator
 {
     private string $prefix;
-    private int $sequence = 0;
-    private int $lastMillis = -1;
+    private bool $useFileLock;
 
-    public function __construct(string $prefix = '')
+    public function __construct(string $prefix = '', bool $useFileLock = false)
     {
         $this->prefix = $prefix;
+        $this->useFileLock = $useFileLock;
     }
 
     public function generate(): string
     {
-        $timestamp = $this->currentTimeMillis();
+        $time = microtime(true);
+        $timeMs = (int)($time * 1000);
 
-        // 避免同一毫秒冲突 → 使用自增序列
-        if ($timestamp === $this->lastMillis) {
-            $this->sequence++;
+        if ($this->useFileLock) {
+            $sequence = $this->getSequenceWithFileLock($timeMs);
         } else {
-            $this->sequence = 0;
-            $this->lastMillis = $timestamp;
+            $pid = getmypid() % 1000;
+            $rand = random_int(0, 999);
+            $sequence = sprintf('%03d%03d', $pid, $rand);
         }
 
-        // 格式化时间戳：年月日时分秒 + 毫秒
-        $datetime = date('YmdHis', (int)($timestamp / 1000));
-        $millis   = str_pad((string)($timestamp % 1000), 3, '0', STR_PAD_LEFT);
-
-        // 拼接：前缀 + 时间戳 + 毫秒 + 序列
-        return $this->prefix . $datetime . $millis . str_pad((string)$this->sequence, 3, '0', STR_PAD_LEFT);
+        return sprintf('%s%d%s', $this->prefix, $timeMs, $sequence);
     }
 
-    /**
-     * 解析 Timestamp ID
-     */
-    public function parse(string $id): array
+    private function getSequenceWithFileLock(int $timeMs): int
     {
-        if ($this->prefix && str_starts_with($id, $this->prefix)) {
-            $id = substr($id, strlen($this->prefix));
+        $lockFile = sys_get_temp_dir() . '/timestamp_sequence.lock';
+        $seqFile  = sys_get_temp_dir() . '/timestamp_sequence.txt';
+        $fp = fopen($lockFile, 'c+');
+        flock($fp, LOCK_EX);
+
+        $sequence = 0;
+        if (file_exists($seqFile)) {
+            $data = json_decode(file_get_contents($seqFile), true);
+            if ($data['time'] === $timeMs) {
+                $sequence = $data['sequence'] + 1;
+            }
         }
 
-        // 拆分: [0-13] -> YmdHis, [14-16] -> 毫秒, [17-19] -> 序列
-        $datetimeStr = substr($id, 0, 14); // YYYYMMDDHHMMSS
-        $millis      = substr($id, 14, 3);
-        $sequence    = substr($id, 17, 3);
+        file_put_contents($seqFile, json_encode(['time' => $timeMs, 'sequence' => $sequence]));
+        flock($fp, LOCK_UN);
+        fclose($fp);
 
-        // 转换成时间戳（秒） + 毫秒
-        $timestamp = strtotime(substr($datetimeStr, 0, 8) . " " . substr($datetimeStr, 8, 2) . ":" . substr($datetimeStr, 10, 2) . ":" . substr($datetimeStr, 12, 2)) * 1000 + (int)$millis;
+        return $sequence;
+    }
+
+    public function parse(string $id, string $prefix = ''): array
+    {
+        $idWithoutPrefix = $prefix ? substr($id, strlen($prefix)) : $id;
+        $timeMs = (int)substr($idWithoutPrefix, 0, 13);
+        $sequence = substr($idWithoutPrefix, 13);
 
         return [
-            'prefix'    => $this->prefix,
-            'datetime'  => \DateTime::createFromFormat('YmdHis', $datetimeStr)->format('Y-m-d H:i:s') . '.' . $millis,
-            'timestamp' => $timestamp,
-            'sequence'  => (int)$sequence,
+            'prefix' => $prefix,
+            'datetime' => date('Y-m-d H:i:s', $timeMs / 1000),
+            'timestamp' => $timeMs,
+            'sequence' => $sequence,
         ];
-    }
-
-    private function currentTimeMillis(): int
-    {
-        return (int) floor(microtime(true) * 1000);
     }
 }

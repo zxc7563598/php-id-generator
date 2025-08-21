@@ -19,8 +19,8 @@ class IdGenerator
      *
      * @param string $strategy 策略名称：snowflake, timestamp, readable
      * @param array $config 配置数组
-     *      - snowflake: ['machineId' => int]
-     *      - timestamp: ['prefix' => string]
+     *      - snowflake: ['machineId' => int, 'useFileLock' => bool]
+     *      - timestamp: ['prefix' => string, 'useFileLock' => bool]
      *      - readable: ['prefix' => string, 'randomLength' => int]
      *      - uuid: ['version' => string]
      *
@@ -30,10 +30,12 @@ class IdGenerator
     {
         return match ($strategy) {
             'snowflake' => new SnowflakeGenerator(
-                $config['machineId'] ?? null
+                $config['machineId'] ?? null,
+                $config['useFileLock'] ?? false
             ),
             'timestamp' => new TimestampGenerator(
-                $config['prefix'] ?? ''
+                $config['prefix'] ?? '',
+                $config['useFileLock'] ?? false
             ),
             'readable'  => new ReadableGenerator(
                 $config['prefix'] ?? 'ID',
