@@ -3,19 +3,35 @@
 namespace Hejunjie\IdGenerator\Strategies;
 
 use Hejunjie\IdGenerator\Contracts\Generator;
+use Random\RandomException;
+use InvalidArgumentException;
 
+/**
+ * UUID 生成器
+ * @package Hejunjie\IdGenerator\Strategies
+ */
 class UUIDGenerator implements Generator
 {
     private string $version;
 
     /**
-     * @param string $version 'v1' | 'v4'
+     * 构造方法
+     * 
+     * @param string $version UUID版本: 'v1' | 'v4'
+     * 
+     * @return void 
      */
     public function __construct(string $version = 'v4')
     {
         $this->version = $version;
     }
 
+    /**
+     * 生成ID
+     * 
+     * @return string 
+     * @throws InvalidArgumentException 
+     */
     public function generate(): string
     {
         return match ($this->version) {
@@ -25,6 +41,12 @@ class UUIDGenerator implements Generator
         };
     }
 
+    /**
+     * 解析ID
+     * 
+     * @param string $uuid ID
+     * @return array 
+     */
     public function parse(string $uuid): array
     {
         $parts = explode('-', $uuid);
@@ -34,6 +56,11 @@ class UUIDGenerator implements Generator
         ];
     }
 
+    /**
+     * 生成UUID v4
+     * 
+     * @return string 
+     */
     private function uuidV4(): string
     {
         // 随机生成 v4 UUID
@@ -43,6 +70,11 @@ class UUIDGenerator implements Generator
         return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
     }
 
+    /**
+     * 生成UUID v1
+     * 
+     * @return string 
+     */
     private function uuidV1(): string
     {
         // 简单实现时间 + 随机 60位 UUID
