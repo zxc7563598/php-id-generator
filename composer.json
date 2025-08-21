@@ -1,6 +1,6 @@
 {
   "name": "hejunjie/id-generator",
-  "description": "一个多策略、高性能的 PHP 唯一 ID 生成器，支持雪花算法、时间戳、自定义可读 ID、UUID 等多种策略，轻松生成可解析的全局唯一 ID。",
+  "description": "轻量级 PHP ID 生成器，提供雪花算法、UUID、时间戳和自定义可读 ID 等多种策略，确保全局唯一性与高并发性能，可轻松集成到任何 PHP 项目，适用于订单号、资源标识、日志追踪等多种业务场景 | A lightweight PHP ID generator supporting Snowflake, UUID, timestamp, and custom readable ID strategies. Ensures global uniqueness and high-performance, easily integrable into any PHP project, suitable for order numbers, resource identifiers, log tracking, and various other business scenarios",
   "type": "library",
   "license": "MIT",
   "autoload": {
