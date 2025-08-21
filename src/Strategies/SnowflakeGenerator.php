@@ -5,6 +5,10 @@ namespace Hejunjie\IdGenerator\Strategies;
 use Hejunjie\IdGenerator\Contracts\Generator;
 use Hejunjie\IdGenerator\Helpers\MachineId;
 
+/**
+ * 雪花 ID 生成器
+ * @package Hejunjie\IdGenerator\Strategies
+ */
 class SnowflakeGenerator implements Generator
 {
     // 起始时间戳（毫秒），通常设置为一个固定时间点，避免 41 位时间溢出

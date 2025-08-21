@@ -4,6 +4,10 @@ namespace Hejunjie\IdGenerator\Strategies;
 
 use Hejunjie\IdGenerator\Contracts\Generator;
 
+/**
+ * 时间戳 ID 生成器
+ * @package Hejunjie\IdGenerator\Strategies
+ */
 class TimestampGenerator implements Generator
 {
     private string $prefix;
