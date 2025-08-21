@@ -4,6 +4,10 @@ namespace Hejunjie\IdGenerator\Strategies;
 
 use Hejunjie\IdGenerator\Contracts\Generator;
 
+/**
+ * 可读 ID 生成器
+ * @package Hejunjie\IdGenerator\Strategies
+ */
 class ReadableGenerator implements Generator
 {
     private string $prefix;
